@@ -30,6 +30,29 @@ function Registeration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const [rulesData, setRulesData] = useState({
+    rulesAccepted: false,
+    termsAccepted: false,
+  });
+
+  const [modal, setModal] = useState({ open: false, type: null });
+
+  const handleRulesChange = (e) => {
+    const { name, type, checked } = e.target;
+    setRulesData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : e.target.value,
+    }));
+  };
+
+  const openModal = (type) => {
+    setModal({ open: true, type });
+  };
+
+  const closeModal = () => {
+    setModal({ open: false, type: null });
+  };
+
   const cities = ['Mumbai', 'Bangalore', 'Pune', 'Gurgao', 'Jaipur', 'Jalandar'];
   const genders = ["Male", "Female"];
   const categories = [
@@ -102,14 +125,14 @@ function Registeration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-40 h-40 rounded-full">
             <img src="pjc-logo-1.png" alt="logo" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-3">
+          <h1 className="text-2xl md:text-4xl font-extrabold sm:font-bold text-gray-800 -mt-2">
             Pro Junior Championship Registration
           </h1>
         </div>
@@ -118,15 +141,16 @@ function Registeration() {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <form onSubmit={handleSubmit} className="p-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
               {/* Title */}
               <div className="lg:col-span-2">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center">
+                <h3 className="text-xl font-bold sm:font-semibold text-gray-800 mb-2 sm:mb-4 text-center">
                   Pro Junior Championship 2025
                 </h3>
               </div>
 
               {/* Full Name */}
-              <div className="lg:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Full Name *
                 </label>
@@ -234,42 +258,41 @@ function Registeration() {
 
               {/* Category */}
               <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Choose Category *
-  </label>
-  <div className="relative">
-    <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-    <Select
-      value={formData.category}
-      onValueChange={(value) =>
-        handleInputChange({ target: { name: "category", value } })
-      }
-    >
-      <SelectTrigger className="pl-10">
-        <SelectValue placeholder="Select Category" />
-      </SelectTrigger>
-      <SelectContent>
-        {categories.map((category) => (
-          <SelectItem key={category} value={category}>
-            {category}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-</div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Choose Category *
+                </label>
+                <div className="relative">
+                  <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) =>
+                      handleInputChange({ target: { name: "category", value } })
+                    }
+                  >
+                    <SelectTrigger className="pl-10 placeholder:text-xs">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-
-              {/* Team Info */}
+              {/* Academy Info */}
               <div className="lg:col-span-2 mt-8">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                  <Users className="w-5 h-5 mr-2 text-blue-700" /> Team Information
+                  <Users className="w-5 h-5 mr-2 text-blue-700" /> Academy Information
                 </h3>
               </div>
 
-              <div>
+              <div className='-mt-3'>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Team Name *
+                  Academy Name *
                 </label>
                 <Input
                   type="text"
@@ -277,26 +300,22 @@ function Registeration() {
                   value={formData.teamName}
                   onChange={handleInputChange}
                   required
-                  placeholder="Enter team name"
+                  placeholder="Enter academy name"
                 />
               </div>
 
-              <div>
+              <div className='sm:-mt-3'>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Team's Academy / Club Name *
+                  Academy Location *
                 </label>
-                <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="text"
-                    name="academyName"
-                    value={formData.academyName}
-                    onChange={handleInputChange}
-                    required
-                    className="pl-10"
-                    placeholder="Enter academy or club name"
-                  />
-                </div>
+                <Input
+                  type="text"
+                  name="academyLocation"
+                  value={formData.academyLocation}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter academy location"
+                />
               </div>
 
               {/* Coach Info */}
@@ -306,7 +325,7 @@ function Registeration() {
                 </h3>
               </div>
 
-              <div>
+              <div className='-mt-3'>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Coach Name *
                 </label>
@@ -320,7 +339,7 @@ function Registeration() {
                 />
               </div>
 
-              <div>
+              <div className='sm:-mt-3'>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Coach's Mobile Number *
                 </label>
@@ -357,8 +376,8 @@ function Registeration() {
               </div>
 
               {/* Upload File */}
-              <div className="lg:col-span-2 mt-8">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="lg:col-span-2 mt-6">
+                <label className="block text-lg font-medium text-gray-700 mb-2">
                   Upload File *
                 </label>
                 <p className="text-sm text-gray-600 mb-3">
@@ -388,6 +407,81 @@ function Registeration() {
 
               {/* Terms */}
               <div className="lg:col-span-2 mt-6">
+                {/* Rules & Regulations */}
+                <label className="flex items-start space-x-3 cursor-pointer mb-3">
+                  <input
+                    type="checkbox"
+                    name="rulesAccepted"
+                    checked={formData.rulesAccepted}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 w-4 h-4 sm:w-4 sm:h-4 text-gray-700 border-gray-300 rounded focus:ring-gray-500"
+                  />
+                  <span className="sm:text-base text-gray-700 leading-relaxed">
+                    I have read and understood the{" "}
+                    <span
+                      className="text-gray-800 font-medium underline cursor-pointer"
+                      onClick={() => openModal("rules")}
+                    >
+                      Rules & Regulations
+                    </span>
+                  </span>
+                </label>
+
+                {/* Terms & Conditions */}
+                <label className="flex items-start space-x-3 cursor-pointer mb-3">
+                  <input
+                    type="checkbox"
+                    name="termsAccepted"
+                    checked={formData.termsAccepted}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 w-4 h-4 sm:w-4 sm:h-4 text-gray-700 border-gray-300 rounded focus:ring-gray-500"
+                  />
+                  <span className="sm:text-base text-gray-700 leading-relaxed">
+                    I agree to the{" "}
+                    <span
+                      className="text-gray-800 font-medium underline cursor-pointer"
+                      onClick={() => openModal("terms")}
+                    >
+                      Terms & Conditions
+                    </span>
+                  </span>
+                </label>
+
+                {/* Modal */}
+                {modal.open && (
+                  <div className="fixed inset-0 flex items-center justify-center z-50">
+                    {/* Overlay */}
+                    <div
+                      className="absolute inset-0 bg-black bg-opacity-50"
+                      onClick={closeModal}
+                    ></div>
+
+                    {/* Modal Content */}
+                    <div className="bg-white rounded-lg shadow-lg p-6 z-10 max-w-3xl w-full max-h-[85vh] flex flex-col">
+                      <h2 className="text-lg font-semibold mb-4">
+                        {modal.type === "rules" ? "Rules & Regulations" : "Terms & Conditions"}
+                      </h2>
+                      <div className="overflow-y-auto pr-2" style={{ maxHeight: "calc(90vh - 100px)" }}>
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                          {modal.type === "rules"
+                            ? rulesText : termsText }
+                        </p>
+                      </div>
+                      <div className="mt-6 flex justify-end">
+                        <button
+                          className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800"
+                          onClick={closeModal}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Acknowledgement */}
                 <label className="flex items-start space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -395,21 +489,20 @@ function Registeration() {
                     checked={formData.agreeTerms}
                     onChange={handleInputChange}
                     required
-                    className="mt-1 w-4 h-4 text-blue-700 border-gray-300 rounded focus:ring-blue-500"
+                    className="mt-1 w-4 h-4 sm:w-6 sm:h-6 text-blue-700 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700 leading-relaxed">
-                    I hereby acknowledge that I have read and agree to all tournament guidelines, rules, and regulations. 
-                    The information I have provided above is true and accurate to the best of my knowledge.
+                  <span className="sm:text-base text-gray-700 leading-relaxed">
+                    I hereby acknowledge that I have read and agree to all tournament guidelines, rules, and regulations. The information I have provided above is true and accurate to the best of my knowledge.
                   </span>
                 </label>
               </div>
 
               {/* Submit */}
-              <div className="lg:col-span-2 mt-8">
+              <div className="lg:col-span-2 mt-4">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full text-white py-4 px-8 rounded-lg font-semibold text-lg shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full text-white py-3 px-8 rounded-lg font-semibold text-lg shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   style={{
                     background: 'linear-gradient(to right, #1e3a8a, #1d4ed8)',
                   }}
@@ -442,5 +535,86 @@ function Registeration() {
     </div>
   );
 }
+
+
+
+const rulesText = `
+Player Count:
+
+Under 9: Mixed Categories. Matches will have 6 players per team with 3 rolling substitutes.
+Boys U 11, U 13, U 15 & U 17: Matches will have 6 players per team with 3 rolling substitutes.
+Girls U13, U15 & U17: Matches will have 6 players per team with 3 rolling substitutes.
+Substitute: Substitutes must be listed before the match. They can only enter from the halfway line with the referee’s approval after the substituted player exits the field.
+Player Equipment: All players must wear appropriate football attire; including jerseys, shorts, shin guards (fully covered by socks), socks, and cleats. Players without proper equipment will not be permitted to play.
+Referee Authority: The referee's decisions are final. Any form of dissent towards the referee's decisions may lead to further disciplinary actions; including carding or match suspension.
+Assistant Referees: Assistant referees will support the main referee in decision-making and ensuring fair play during matches.
+Match Duration:
+
+Under 9: Each match will be 13 minutes in total, split into two halves of 6 minutes with a 1-minute break.
+Under 11, Under 13, Under 15, Under 17 (Boys & Girls): Each match will last 18 minutes in total, with two halves of 8 minutes and a 2-minute halftime break.
+Knockout Matches (Quarterfinals, Semifinals, and Finals): Each knockout match will last 30 minutes in total, with two halves of 10 minutes and a 5-minute break.
+Kickoff and Play Restart: The team that wins the coin toss can either choose possession or the side they want to defend. Kickoff will occur from the halfway line at the beginning of each half and after a goal is scored.
+Ball In and Out of Play: The ball is out of play when it crosses the goal or touchlines or when the referee stops play.
+Scoring: A goal is counted when the entire ball crosses the goal line. The team with the most goals at the end of the match will be declared the winner.
+No Offside Rule: There will be no offside rule enforced during the matches.
+Kick-ins: Throw-ins will be replaced by kick-ins from the touchline.
+Goalkeeper Restrictions: Goalkeepers are not allowed to take the volleys.
+Free Kicks: Both direct and indirect free kicks are allowed at the referee’s discretion.
+Fouls and Misconduct:
+
+Yellow Card: A yellow card results in the player being sidelined for 2 minutes.
+Red Card: A red card results in the player being sent off for the remainder of the match and suspended for the next game.
+Walkover Rule: If a team does not show up for a match, a 15-minute grace period will be allowed. After this time, the opposing team will be awarded a 3-0 walkover.
+Fair Play and Conduct: All participants are expected to uphold the values of sportsmanship, respect, and fair play at all times. Referees and officials will ensure smooth conduct, and their decisions are final.
+Tournament Structure Adjustments: If a category has fewer than 8 teams, the organizing committee reserves the right to disqualify the category or alter the tournament structure, such as changing the format or merging age groups. Teams in canceled categories will have the option to upgrade to a higher eligible category or receive a refund.
+`;
+
+const termsText = `
+Eligibility Criteria:
+
+Under 9: Born on or after January 1, 2016.
+Under 11: Born on or after January 1, 2014.
+Under 13: Born on or after January 1, 2012.
+Under 15: Born on or after January 1, 2010.
+Under 17: Born on or after January 1, 2008.
+Identity Verification: Players must provide an Aadhar Card and Birth Certificate for age verification. Any attempt at age fraud will result in immediate disqualification and penalties for both the player and the team.
+Registration & Entry Fees: Teams must complete registration before participation. All entry fees are non-refundable once payment is made, regardless of circumstances, including player injuries, team withdrawals, or cancellations due to unforeseen events.
+Objection to Player Eligibility: Coaches or managers wishing to challenge a player’s eligibility must submit an objection fee of ₹5000. If the objection is upheld, the fee will be refunded.
+Liability for Personal Belongings and Injuries: The organizing committee is not responsible for the loss of personal belongings (e.g., jewelry, accessories). Additionally, the committee is not liable for injuries sustained during the tournament. While on-site medical support will be provided, any hospitalization or extended care costs will be a complete responsibility of the player.
+Code of Conduct: All participants (players, coaches, and spectators) must maintain sportsmanlike behavior throughout the tournament. Any form of misconduct, such as verbal abuse or physical altercations, will lead to disciplinary action, including suspension or disqualification.
+Media Consent: By participating in the tournament, players and their guardians consent to the use of photographs, videos, and other media for promotional purposes by the organizing committee.
+Authority to Amend Rules: The organizing committee reserves the right to amend or update any rules, regulations, or terms at any time. Participants will be notified promptly of any changes.
+Cancellation of Categories: If fewer than 8 teams register in a category, the organizing committee may cancel the category. In this case, participants can either upgrade to a higher category if eligible; or request for a refund.
+
+Additional Terms & Conditions
+
+Natural Calamities and Force Majeure
+In the event of unforeseen circumstances such as extreme weather, natural disasters, health emergencies, government restrictions, strikes, or civil disturbances; the organizing committee reserves the right to reschedule, postpone or cancel the affected matches or the tournament as a whole.
+In case of cancellation due to such events, registration fees may be refunded partially or fully at the committee’s discretion, based on incurred costs. Refund policies related to these situations will be communicated promptly to the registered teams.
+
+Match Delays and Rescheduling
+Matches may be delayed or rescheduled due to uncontrollable circumstances, such as adverse weather, unsafe field conditions, technical issues, or government restrictions.
+Teams are expected to cooperate with any rescheduling adjustments; non-participation due to rescheduling will be considered a forfeit.
+If a delay exceeds one hour, the match may be postponed to a different date, subject to the organizing committee's approval and field availability.
+
+Spectator Guidelines and Safety
+Spectators are expected to respect tournament rules, teams, officials, and property. Misconduct, including unauthorized access to the field, disruptive behavior, or physical/verbal altercations, will result in removal from the premises.
+Children under the age of 12 must be supervised at all times. Spectators should follow entry, exit, and seating instructions provided by tournament staff.
+
+Medical Emergencies
+The organizing committee will provide on-ground first-aid assistance during the tournament. However, in cases of severe injury requiring hospital treatment or specialized medical care, the organizing committee is not responsible for any medical insurance coverage or expenses incurred. All such costs will be the responsibility of the player, their guardian, or team.
+The organizing committee will coordinate with emergency services in severe cases and notify the player's guardian or team manager promptly.
+
+Liability for Damaged Equipment or Venue
+Any damage to the venue, including facilities like the field, goalposts, seating areas, or other tournament property caused by teams, players, or spectators, will be assessed and charged to the responsible party.
+Teams are responsible for ensuring respectful and appropriate use of all tournament facilities and equipment.
+
+Data Privacy
+Personal information provided by participants, including identification details for age verification, will be securely handled and used only for registration and age verification purposes. The organizing committee will take appropriate measures to protect this data and will not share it without consent.
+
+Travel and Accommodation
+Teams are responsible for their own travel, food, and accommodation arrangements, unless otherwise stated in the tournament details.
+The organizing committee does not take responsibility for travel disruptions or other logistical issues encountered by teams.
+`;
 
 export default Registeration;
