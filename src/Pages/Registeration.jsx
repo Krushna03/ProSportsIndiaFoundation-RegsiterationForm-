@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Users, Mail, Phone, MapPin, Trophy, User, Building, CheckCircle } from 'lucide-react';
+import { Users, Mail, Phone, MapPin, Trophy, User, CheckCircle, Calendar } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -8,9 +8,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { CalendarDayButton, Calender } from "../components/ui/calendar";
 
 function Registeration() {
 
+  const [date, setDate] = React.useState(new Date())
   const [formData, setFormData] = useState({
     teamRepName: '',
     emailId: '',
@@ -129,7 +131,7 @@ function Registeration() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-40 h-40 rounded-full">
+          <div className="inline-flex items-center justify-center w-48 h-48 rounded-full">
             <img src="pjc-logo-1.png" alt="logo" />
           </div>
           <h1 className="text-2xl md:text-4xl font-extrabold sm:font-bold text-gray-800 -mt-2">
@@ -255,6 +257,21 @@ function Registeration() {
                   </Select>
                 </div>
               </div>
+              
+              {/* <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date of Birth *
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <CalendarDayButton
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-lg border"
+                  />
+                </div>
+              </div> */}              
 
               {/* Category */}
               <div>
@@ -376,7 +393,7 @@ function Registeration() {
               </div>
 
               {/* Upload File */}
-              <div className="lg:col-span-2 mt-6">
+              {/* <div className="lg:col-span-2 mt-6">
                 <label className="block text-lg font-medium text-gray-700 mb-2">
                   Upload File *
                 </label>
@@ -403,13 +420,14 @@ function Registeration() {
                     )}
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Terms */}
               <div className="lg:col-span-2 mt-6">
                 {/* Rules & Regulations */}
-                <label className="flex items-start space-x-3 cursor-pointer mb-3">
-                  <input
+                <div className="flex items-start space-x-3 mb-3">
+                    <input
+                    id="rulesAccepted"
                     type="checkbox"
                     name="rulesAccepted"
                     checked={formData.rulesAccepted}
@@ -426,11 +444,12 @@ function Registeration() {
                       Rules & Regulations
                     </span>
                   </span>
-                </label>
+                </div>
 
                 {/* Terms & Conditions */}
-                <label className="flex items-start space-x-3 cursor-pointer mb-3">
+                <div className="flex items-start space-x-3 mb-3">
                   <input
+                    id="termsAccepted"
                     type="checkbox"
                     name="termsAccepted"
                     checked={formData.termsAccepted}
@@ -447,7 +466,8 @@ function Registeration() {
                       Terms & Conditions
                     </span>
                   </span>
-                </label>
+                </div>
+
 
                 {/* Modal */}
                 {modal.open && (
@@ -482,7 +502,7 @@ function Registeration() {
                 )}
 
                 {/* Acknowledgement */}
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <div className="flex items-start space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
                     name="agreeTerms"
@@ -494,7 +514,7 @@ function Registeration() {
                   <span className="sm:text-base text-gray-700 leading-relaxed">
                     I hereby acknowledge that I have read and agree to all tournament guidelines, rules, and regulations. The information I have provided above is true and accurate to the best of my knowledge.
                   </span>
-                </label>
+                </div>
               </div>
 
               {/* Submit */}
