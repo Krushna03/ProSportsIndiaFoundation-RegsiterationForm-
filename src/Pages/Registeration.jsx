@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, Mail, Phone, MapPin, Trophy, User, CheckCircle, Calendar } from 'lucide-react';
+import { Users, Mail, Phone, MapPin, Trophy, User, CheckCircle, Calendar, CalendarIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -8,11 +8,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { CalendarDayButton, Calender } from "../components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calender } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
-function Registeration() {
+// Updated category eligibility based on PJC 2025 requirements
+const categoryEligibility = [
+  { label: "Under 11 (U11)", cutoff: new Date("2015-01-01") },
+  { label: "Under 13 (U13)", cutoff: new Date("2013-01-01") },
+  { label: "Under 15 (U15)", cutoff: new Date("2011-01-01") },
+  { label: "Under 17 (U17)", cutoff: new Date("2009-01-01") },
+];
 
-  const [date, setDate] = React.useState(new Date())
+export default function Registeration() {
+  const [dateOfBirth, setDateOfBirth] = useState(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  
   const [formData, setFormData] = useState({
     teamRepName: '',
     emailId: '',
@@ -21,30 +34,46 @@ function Registeration() {
     city: '',
     category: '',
     teamName: '',
-    academyName: '',
+    academyLocation: '',
     coachName: '',
     coachMobile: '',
     coachEmail: '',
     paymentFile: null,
-    agreeTerms: false
+    agreeTerms: false,
+    rulesAccepted: false,
+    termsAccepted: false
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const [rulesData, setRulesData] = useState({
-    rulesAccepted: false,
-    termsAccepted: false,
-  });
-
   const [modal, setModal] = useState({ open: false, type: null });
+  const [eligibleCategories, setEligibleCategories] = useState([]);
 
-  const handleRulesChange = (e) => {
-    const { name, type, checked } = e.target;
-    setRulesData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : e.target.value,
-    }));
+  const checkEligibility = (dob) => {
+    if (!dob) return [];
+    
+    return categoryEligibility
+      .filter(cat => dob >= cat.cutoff)
+      .map(cat => cat.label);
+  };
+
+  const handleDateChange = (date) => {
+    setDateOfBirth(date);
+    setIsCalendarOpen(false);
+    
+    if (date) {
+      const categories = checkEligibility(date);
+      setEligibleCategories(categories);
+      
+      // Reset category if it's not in the eligible list
+      setFormData(prev => ({
+        ...prev,
+        category: categories.includes(prev.category) ? prev.category : ""
+      }));
+    } else {
+      setEligibleCategories([]);
+      setFormData(prev => ({ ...prev, category: "" }));
+    }
   };
 
   const openModal = (type) => {
@@ -57,14 +86,6 @@ function Registeration() {
 
   const cities = ['Mumbai', 'Bangalore', 'Pune', 'Gurgao', 'Jaipur', 'Jalandar'];
   const genders = ["Male", "Female"];
-  const categories = [
-    'MK CATEGORY UNDER 9',
-    'MK CATEGORY UNDER 11',
-    'MK CATEGORY UNDER 13',
-    'MK CATEGORY UNDER 15',
-    'MK CATEGORY UNDER 17',
-    'MK CATEGORY UNDER 19'
-  ];
 
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
@@ -102,13 +123,17 @@ function Registeration() {
         city: '',
         category: '',
         teamName: '',
-        academyName: '',
+        academyLocation: '',
         coachName: '',
         coachMobile: '',
         coachEmail: '',
         paymentFile: null,
-        agreeTerms: false
+        agreeTerms: false,
+        rulesAccepted: false,
+        termsAccepted: false
       });
+      setDateOfBirth(null);
+      setEligibleCategories([]);
     }, 3000);
   };
 
@@ -257,48 +282,68 @@ function Registeration() {
                   </Select>
                 </div>
               </div>
-              
-              {/* <div>
+
+              {/* DOB with Calendar */}
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Date of Birth *
                 </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <CalendarDayButton
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="rounded-lg border"
-                  />
-                </div>
-              </div> */}              
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Choose Category *
-                </label>
-                <div className="relative">
-                  <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) =>
-                      handleInputChange({ target: { name: "category", value } })
-                    }
-                  >
-                    <SelectTrigger className="pl-10 placeholder:text-xs">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !dateOfBirth && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateOfBirth ? format(dateOfBirth, "PPP") : "Pick your date of birth"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calender
+                      mode="single"
+                      selected={dateOfBirth}
+                      onSelect={handleDateChange}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                      initialFocus
+                      captionLayout="dropdown-buttons"
+                      fromYear={2000}
+                      toYear={new Date().getFullYear()}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
+
+              {/* Category Dropdown - Only show when eligible categories exist */}
+              {eligibleCategories.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Choose Category *
+                  </label>
+                  <div className="relative">
+                    <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) =>
+                        handleInputChange({ target: { name: "category", value } })
+                      }
+                    >
+                      <SelectTrigger className="pl-10">
+                        <SelectValue placeholder="Select your category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {eligibleCategories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
               {/* Academy Info */}
               <div className="lg:col-span-2 mt-8">
@@ -392,36 +437,6 @@ function Registeration() {
                 </div>
               </div>
 
-              {/* Upload File */}
-              {/* <div className="lg:col-span-2 mt-6">
-                <label className="block text-lg font-medium text-gray-700 mb-2">
-                  Upload File *
-                </label>
-                <p className="text-sm text-gray-600 mb-3">
-                  Kindly attach a successful payment screenshot to confirm your registration.
-                </p>
-                <div className="relative">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors duration-200">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <Input
-                      type="file"
-                      onChange={handleFileChange}
-                      accept="image/*,.pdf"
-                      required
-                      className="opacity-0 absolute inset-0 cursor-pointer"
-                    />
-                    {formData.paymentFile ? (
-                      <p className="text-blue-700 font-medium">{formData.paymentFile.name}</p>
-                    ) : (
-                      <p className="text-gray-600">
-                        Click to upload or drag and drop<br />
-                        <span className="text-sm text-gray-500">PNG, JPG, PDF up to 10MB</span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div> */}
-
               {/* Terms */}
               <div className="lg:col-span-2 mt-6">
                 {/* Rules & Regulations */}
@@ -468,7 +483,6 @@ function Registeration() {
                   </span>
                 </div>
 
-
                 {/* Modal */}
                 {modal.open && (
                   <div className="fixed inset-0 flex items-center justify-center z-50">
@@ -485,8 +499,7 @@ function Registeration() {
                       </h2>
                       <div className="overflow-y-auto pr-2" style={{ maxHeight: "calc(90vh - 100px)" }}>
                         <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                          {modal.type === "rules"
-                            ? rulesText : termsText }
+                          {modal.type === "rules" ? rulesText : termsText}
                         </p>
                       </div>
                       <div className="mt-6 flex justify-end">
@@ -521,18 +534,18 @@ function Registeration() {
               <div className="lg:col-span-2 mt-4">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (dateOfBirth && eligibleCategories.length === 0)}
                   className="w-full text-white py-3 px-8 rounded-lg font-semibold text-lg shadow-lg transform hover:scale-[1.02] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   style={{
                     background: 'linear-gradient(to right, #1e3a8a, #1d4ed8)',
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSubmitting) {
+                    if (!isSubmitting && !(dateOfBirth && eligibleCategories.length === 0)) {
                       e.currentTarget.style.background = 'linear-gradient(to right, #1e40af, #2563eb)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSubmitting) {
+                    if (!isSubmitting && !(dateOfBirth && eligibleCategories.length === 0)) {
                       e.currentTarget.style.background = 'linear-gradient(to right, #1e3a8a, #1d4ed8)';
                     }
                   }}
@@ -556,15 +569,13 @@ function Registeration() {
   );
 }
 
-
-
 const rulesText = `
 Player Count:
 
 Under 9: Mixed Categories. Matches will have 6 players per team with 3 rolling substitutes.
 Boys U 11, U 13, U 15 & U 17: Matches will have 6 players per team with 3 rolling substitutes.
 Girls U13, U15 & U17: Matches will have 6 players per team with 3 rolling substitutes.
-Substitute: Substitutes must be listed before the match. They can only enter from the halfway line with the referee’s approval after the substituted player exits the field.
+Substitute: Substitutes must be listed before the match. They can only enter from the halfway line with the referee's approval after the substituted player exits the field.
 Player Equipment: All players must wear appropriate football attire; including jerseys, shorts, shin guards (fully covered by socks), socks, and cleats. Players without proper equipment will not be permitted to play.
 Referee Authority: The referee's decisions are final. Any form of dissent towards the referee's decisions may lead to further disciplinary actions; including carding or match suspension.
 Assistant Referees: Assistant referees will support the main referee in decision-making and ensuring fair play during matches.
@@ -579,7 +590,7 @@ Scoring: A goal is counted when the entire ball crosses the goal line. The team 
 No Offside Rule: There will be no offside rule enforced during the matches.
 Kick-ins: Throw-ins will be replaced by kick-ins from the touchline.
 Goalkeeper Restrictions: Goalkeepers are not allowed to take the volleys.
-Free Kicks: Both direct and indirect free kicks are allowed at the referee’s discretion.
+Free Kicks: Both direct and indirect free kicks are allowed at the referee's discretion.
 Fouls and Misconduct:
 
 Yellow Card: A yellow card results in the player being sidelined for 2 minutes.
@@ -599,7 +610,7 @@ Under 15: Born on or after January 1, 2010.
 Under 17: Born on or after January 1, 2008.
 Identity Verification: Players must provide an Aadhar Card and Birth Certificate for age verification. Any attempt at age fraud will result in immediate disqualification and penalties for both the player and the team.
 Registration & Entry Fees: Teams must complete registration before participation. All entry fees are non-refundable once payment is made, regardless of circumstances, including player injuries, team withdrawals, or cancellations due to unforeseen events.
-Objection to Player Eligibility: Coaches or managers wishing to challenge a player’s eligibility must submit an objection fee of ₹5000. If the objection is upheld, the fee will be refunded.
+Objection to Player Eligibility: Coaches or managers wishing to challenge a player's eligibility must submit an objection fee of ₹5000. If the objection is upheld, the fee will be refunded.
 Liability for Personal Belongings and Injuries: The organizing committee is not responsible for the loss of personal belongings (e.g., jewelry, accessories). Additionally, the committee is not liable for injuries sustained during the tournament. While on-site medical support will be provided, any hospitalization or extended care costs will be a complete responsibility of the player.
 Code of Conduct: All participants (players, coaches, and spectators) must maintain sportsmanlike behavior throughout the tournament. Any form of misconduct, such as verbal abuse or physical altercations, will lead to disciplinary action, including suspension or disqualification.
 Media Consent: By participating in the tournament, players and their guardians consent to the use of photographs, videos, and other media for promotional purposes by the organizing committee.
@@ -610,31 +621,9 @@ Additional Terms & Conditions
 
 Natural Calamities and Force Majeure
 In the event of unforeseen circumstances such as extreme weather, natural disasters, health emergencies, government restrictions, strikes, or civil disturbances; the organizing committee reserves the right to reschedule, postpone or cancel the affected matches or the tournament as a whole.
-In case of cancellation due to such events, registration fees may be refunded partially or fully at the committee’s discretion, based on incurred costs. Refund policies related to these situations will be communicated promptly to the registered teams.
+In case of cancellation due to such events, registration fees may be refunded partially or fully at the committee's discretion, based on incurred costs. Refund policies related to these situations will be communicated promptly to the registered teams.
 
 Match Delays and Rescheduling
 Matches may be delayed or rescheduled due to uncontrollable circumstances, such as adverse weather, unsafe field conditions, technical issues, or government restrictions.
 Teams are expected to cooperate with any rescheduling adjustments; non-participation due to rescheduling will be considered a forfeit.
-If a delay exceeds one hour, the match may be postponed to a different date, subject to the organizing committee's approval and field availability.
-
-Spectator Guidelines and Safety
-Spectators are expected to respect tournament rules, teams, officials, and property. Misconduct, including unauthorized access to the field, disruptive behavior, or physical/verbal altercations, will result in removal from the premises.
-Children under the age of 12 must be supervised at all times. Spectators should follow entry, exit, and seating instructions provided by tournament staff.
-
-Medical Emergencies
-The organizing committee will provide on-ground first-aid assistance during the tournament. However, in cases of severe injury requiring hospital treatment or specialized medical care, the organizing committee is not responsible for any medical insurance coverage or expenses incurred. All such costs will be the responsibility of the player, their guardian, or team.
-The organizing committee will coordinate with emergency services in severe cases and notify the player's guardian or team manager promptly.
-
-Liability for Damaged Equipment or Venue
-Any damage to the venue, including facilities like the field, goalposts, seating areas, or other tournament property caused by teams, players, or spectators, will be assessed and charged to the responsible party.
-Teams are responsible for ensuring respectful and appropriate use of all tournament facilities and equipment.
-
-Data Privacy
-Personal information provided by participants, including identification details for age verification, will be securely handled and used only for registration and age verification purposes. The organizing committee will take appropriate measures to protect this data and will not share it without consent.
-
-Travel and Accommodation
-Teams are responsible for their own travel, food, and accommodation arrangements, unless otherwise stated in the tournament details.
-The organizing committee does not take responsibility for travel disruptions or other logistical issues encountered by teams.
-`;
-
-export default Registeration;
+If a delay exceeds one hour, the match may be postponed to a different date, subject to the organizing committee's approval and field availability.`
