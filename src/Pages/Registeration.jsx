@@ -8,19 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-
-// Mock data for demonstration
-const cities = ["Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad"];
-const genders = ["Male", "Female", "Other"];
-const categoryEligibility = [
-  { label: "Under 12", cutoff: new Date("2013-01-01") },
-  { label: "Under 14", cutoff: new Date("2011-01-01") },
-  { label: "Under 16", cutoff: new Date("2009-01-01") },
-  { label: "Under 18", cutoff: new Date("2007-01-01") }
-];
-
-const rulesText = "Sample rules and regulations text...";
-const termsText = "Sample terms and conditions text...";
+import { toast } from 'sonner';
+import { categoryEligibility, cities, genders } from '../constants/formConstants';
 
 export default function Registration() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -31,6 +20,9 @@ export default function Registration() {
   const [formData, setFormData] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [registrationId, setRegistrationId] = useState(null);
+  const [apiError, setApiError] = useState(null);
+  const url = import.meta.env.VITE_BACKEND_URL
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm({});
 
@@ -55,65 +47,145 @@ export default function Registration() {
   const openModal = (type) => setModal({ open: true, type });
   const closeModal = () => setModal({ open: false, type: null });
 
-  // Step 1: Form submission (validation only)
+  // Step 1: Form submission with API call
   const onFormSubmit = async (data) => {
     if (!eligibleCategories.includes(data.category)) {
-      alert("Selected category is not valid for your Date of Birth.");
+      toast.error("Selected category is not valid for your Date of Birth.");
       return;
     }
     
-    setFormData(data);
-    setStep(2); // Move to payment step
+    setApiError(null);
+    
+    try {
+      // API call to create registration
+      const response = await fetch(`${url}/api/registration/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...data,
+          dateOfBirth: data.dateOfBirth.toISOString(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Success - store the registration ID and form data
+        setRegistrationId(result.registrationId);
+        setFormData(data);
+        setStep(2); // Move to payment step
+        toast.success("Registration details saved successfully!");
+      } else {
+        // Handle API errors
+        setApiError(result.message || 'Registration failed');
+        toast.error(result.message || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error("Registration API error:", error);
+      setApiError('Network error. Please check your connection and try again.');
+      toast.error('Network error. Please check your connection and try again.');
+    }
   };
 
   // Step 2: Payment processing
   const handlePayment = async () => {
     if (!paymentMethod) {
-      alert("Please select a payment method");
+      toast.error("Please select a payment method");
       return;
     }
 
     setProcessingPayment(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock payment success
-      setPaymentStatus(true);
-      setStep(3); // Move to final registration step
-      
-      // Now submit the actual registration
-      await submitRegistration();
+      // Create Razorpay order
+      const orderResponse = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          registrationId: registrationId,
+          amount: 2500, // Amount in INR
+          paymentMethod: paymentMethod
+        }),
+      });
+
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(orderData.message || 'Failed to create payment order');
+      }
+
+      // Initialize Razorpay payment
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'your_razorpay_key_id',
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Pro Junior Championship',
+        description: 'Registration Fee',
+        order_id: orderData.id,
+        handler: async function (response) {
+          // Payment successful, verify on backend
+          await verifyPayment(response);
+        },
+        prefill: {
+          name: formData?.teamRepName,
+          email: formData?.emailId,
+          contact: formData?.phoneNo
+        },
+        theme: {
+          color: '#1e3a8a'
+        },
+        modal: {
+          ondismiss: function() {
+            setProcessingPayment(false);
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
       
     } catch (error) {
       console.error("Payment error:", error);
-      alert("Payment failed. Please try again.");
-    } finally {
+      toast.error(error.message || "Payment failed. Please try again.");
       setProcessingPayment(false);
     }
   };
 
-  // Step 3: Final registration submission
-  const submitRegistration = async () => {
-    setSubmitted(true);
-    
+  // Verify payment on backend
+  const verifyPayment = async (paymentResponse) => {
     try {
-      // Simulate API call
-      const response = await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ status: 200 });
-        }, 1000);
+      const response = await fetch('/api/payment/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          registrationId: registrationId,
+          razorpay_order_id: paymentResponse.razorpay_order_id,
+          razorpay_payment_id: paymentResponse.razorpay_payment_id,
+          razorpay_signature: paymentResponse.razorpay_signature,
+        }),
       });
 
-      if (response.status === 200) {
-        console.log("Registration Successful");
-        reset();
+      const result = await response.json();
+
+      if (response.ok) {
+        setPaymentStatus(true);
+        setStep(3);
+        setSubmitted(true);
+        toast.success("Payment successful! Registration completed.");
+      } else {
+        throw new Error(result.message || 'Payment verification failed');
       }
     } catch (error) {
-      console.error("Submission error:", error);
-      alert("Registration failed. Please contact support.");
-      setSubmitted(false);
+      console.error("Payment verification error:", error);
+      toast.error(error.message || "Payment verification failed. Please contact support.");
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -121,10 +193,17 @@ export default function Registration() {
     setStep(1);
     setPaymentMethod('');
     setPaymentStatus(false);
+    setApiError(null);
+  };
+
+  // Retry registration
+  const retryRegistration = () => {
+    setApiError(null);
+    // User can try submitting the form again
   };
 
   // Success page
-  if (submitted) {
+  if (submitted && paymentStatus) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
@@ -135,7 +214,7 @@ export default function Registration() {
           <p className="text-gray-600 mb-4">Your team registration has been submitted successfully. You will receive a confirmation email shortly.</p>
           <div className="bg-green-50 p-4 rounded-lg">
             <p className="text-green-800 font-semibold">Payment Status: Confirmed</p>
-            <p className="text-green-600 text-sm">Transaction ID: TXN{Date.now()}</p>
+            <p className="text-green-600 text-sm">Registration ID: {registrationId}</p>
           </div>
         </div>
       </div>
@@ -143,7 +222,7 @@ export default function Registration() {
   }
 
   // Payment step
-  if (step === 2) {
+  if (step === 2 && registrationId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 px-4">
         <div className="max-w-2xl mx-auto">
@@ -188,6 +267,7 @@ export default function Registration() {
             <div className="mb-6">
               <h3 className="text-xl font-bold text-gray-800 mb-2">Complete Your Payment</h3>
               <p className="text-gray-600">Registration Fee: ₹2,500</p>
+              <p className="text-sm text-green-600 mt-1">Registration ID: {registrationId}</p>
             </div>
 
             {/* Registration Summary */}
@@ -278,7 +358,8 @@ export default function Registration() {
             <div className="flex gap-4">
               <button
                 onClick={goBackToForm}
-                className="flex-1 flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50"
+                disabled={processingPayment}
+                className="flex-1 flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Form
@@ -344,6 +425,24 @@ export default function Registration() {
             </div>
           </div>
         </div>
+
+        {/* Error Message */}
+        {apiError && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-4 h-4 text-red-500 mr-2">⚠</div>
+                <span className="text-red-800 font-medium">{apiError}</span>
+              </div>
+              <button
+                onClick={retryRegistration}
+                className="text-red-600 hover:text-red-800 text-sm font-medium underline"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -703,14 +802,14 @@ export default function Registration() {
                 <button
                   type="submit"
                   disabled={isSubmitting || (dateOfBirth && eligibleCategories.length === 0)}
-                  className="w-full text-white py-2 px-8 rounded-lg font-semibold text-lg shadow-lg flex items-center justify-center"
+                  className="w-full text-white py-2 px-8 rounded-lg font-semibold text-lg shadow-lg flex items-center justify-center disabled:opacity-50"
                   style={{ background: 'linear-gradient(to right, #1e3a8a, #1d4ed8)' }}
                 >
                   {isSubmitting ? (
-                    "Processing..."
+                    "Saving Registration..."
                   ) : (
                     <>
-                      Continue to Payment
+                      Save & Continue to Payment
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </>
                   )}
