@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from 'sonner';
 import { categoryEligibility, cities, genders } from '../constants/formConstants';
+import { rulesText, termsText } from "../constants/rulesAndTerms"
 
 export default function Registration() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -100,14 +101,14 @@ export default function Registration() {
     
     try {
       // Create Razorpay order
-      const orderResponse = await fetch('/api/payment/create-order', {
+      const orderResponse = await fetch(`${url}/api/payment/create-order`, {
         method: 'POST',
-        headers: {
+        headers: {  
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           registrationId: registrationId,
-          amount: 2500, // Amount in INR
+          amount: 2500, 
           paymentMethod: paymentMethod
         }),
       });
@@ -120,7 +121,7 @@ export default function Registration() {
 
       // Initialize Razorpay payment
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'your_razorpay_key_id',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Pro Junior Championship',
@@ -158,7 +159,7 @@ export default function Registration() {
   // Verify payment on backend
   const verifyPayment = async (paymentResponse) => {
     try {
-      const response = await fetch('/api/payment/verify', {
+      const response = await fetch(`${url}/api/payment/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -402,26 +403,26 @@ export default function Registration() {
 
         {/* Progress indicator */}
         <div className="mb-8">
-          <div className="flex items-center justify-center space-x-4">
+          <div className="flex items-center justify-center space-x-2 sm:space-x-4">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">1</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs sm:text-sm font-bold">1</span>
               </div>
-              <span className="ml-2 text-sm font-medium text-blue-600">Registration Form</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-blue-600">Registration</span>
             </div>
             <div className="w-16 h-1 bg-gray-300"></div>
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-bold">2</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-gray-600 text-xs sm:text-sm font-bold">2</span>
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-500">Payment</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-500">Payment</span>
             </div>
             <div className="w-16 h-1 bg-gray-300"></div>
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-bold">3</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-gray-600 text-xs sm:text-sm font-bold">3</span>
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-500">Confirmation</span>
+              <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-500">Confirmation</span>
             </div>
           </div>
         </div>
@@ -572,8 +573,18 @@ export default function Registration() {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={dateOfBirth || undefined}
-                      onSelect={handleDateChange}
+                      selected={watch("dateOfBirth") || undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setValue("dateOfBirth", date, { shouldValidate: true })
+                        }
+                      }}
+                      onMonthChange={(month) => {
+                        setValue("dateOfBirth", month, { shouldValidate: true })
+                      }}
+                      onYearChange={(year) => {
+                        setValue("dateOfBirth", year, { shouldValidate: true })
+                      }}
                       disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
                       fromYear={2000}
                       toYear={new Date().getFullYear()}
@@ -750,7 +761,7 @@ export default function Registration() {
                         className="overflow-y-auto pr-2"
                         style={{ maxHeight: "calc(90vh - 100px)" }}
                       >
-                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                        <p className="text-base text-gray-800 leading-relaxed whitespace-pre-line">
                           {modal.type === "rules" ? rulesText : termsText}
                         </p>
                       </div>
@@ -771,7 +782,7 @@ export default function Registration() {
                   <input
                     type="checkbox"
                     {...register("agreeTerms", { required: "You must acknowledge the terms" })}
-                    className="mt-1 w-4 h-4 sm:w-6 sm:h-6 text-blue-700 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                    className="mt-1 w-4 h-4 sm:w-7 sm:h-7 text-blue-700 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="sm:text-base text-gray-700 leading-relaxed">
                     I hereby acknowledge that I have read and agree to all tournament guidelines, rules,
@@ -795,7 +806,7 @@ export default function Registration() {
                     Complete payment after submitting the form to finalize your registration.
                   </p>
                 </div>
-              </div>
+              </div>  
 
               {/* Submit */}
               <div className="lg:col-span-2 mt-4">
