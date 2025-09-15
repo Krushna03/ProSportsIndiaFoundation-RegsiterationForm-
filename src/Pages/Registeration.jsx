@@ -50,8 +50,20 @@ export default function Registration() {
 
   // Step 1: Form submission with API call
   const onFormSubmit = async (data) => {
+    if (!data.dateOfBirth) {
+      toast.error("Please select date of birth.");
+      return;
+    }
     if (!eligibleCategories.includes(data.category)) {
-      toast.error("Selected category is not valid for your Date of Birth.");
+      toast.error("Please select category or You are not eligible to register.");
+      return;
+    }
+    if (!data.gender) {
+      toast.error("Please select gender.");
+      return;
+    }
+    if (!data.city) {
+      toast.error("Please select city.");
       return;
     }
     

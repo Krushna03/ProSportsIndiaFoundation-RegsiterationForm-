@@ -1,5 +1,5 @@
 
-export const cities = ['Jalandar', 'Gurgao', 'Jaipur', 'Mumbai', 'Bengaluru'];
+export const cities = ['Jalandar', 'Gurgaon', 'Jaipur', 'Mumbai', 'Bengaluru'];
 export const genders = ["Male", "Female"];
 
 export const categoryEligibility = [
