@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { toast } from 'sonner';
 import { categoryEligibility, cities, genders } from '../constants/formConstants';
 import { rulesText, termsText } from "../constants/rulesAndTerms"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export default function Registration() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -25,25 +26,41 @@ export default function Registration() {
   const [apiError, setApiError] = useState(null);
   const url = import.meta.env.VITE_BACKEND_URL
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm({});
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: {
+      category: [] 
+    }
+  });
 
   const dateOfBirth = watch("dateOfBirth");
   const category = watch("category");
 
-  const checkEligibility = (dob) => {
+  const checkEligibilityExplicit = (dob) => {
     if (!dob) return [];
-    return categoryEligibility.filter(cat => dob >= cat.cutoff).map(cat => cat.label);
-  };
-
-  const eligibleCategories = checkEligibility(dateOfBirth);
-
-  const handleDateChange = (date) => {
-    setIsCalendarOpen(false);
-    setValue("dateOfBirth", date || null, { shouldValidate: true });
-    if (date && !eligibleCategories.includes(category)) {
-      setValue("category", "");
+    
+    const eligible = [];
+    
+    // Born 2015 or later -> U11 only
+    if (dob >= new Date("2015-01-01")) {
+      eligible.push("Under 11 (U11)");
     }
+    // Born 2013-2014 -> U11 and U13
+    else if (dob >= new Date("2013-01-01")) {
+      eligible.push("Under 13 (U13)", "Under 15 (U15)");
+    }
+    // Born 2011-2012 -> U15 and U17
+    else if (dob >= new Date("2011-01-01")) {
+      eligible.push("Under 15 (U15)", "Under 17 (U17)");
+    } 
+    // Born 2009-2010 -> U17
+    else if (dob >= new Date("2009-01-01")) {
+      eligible.push("Under 17 (U17)");
+    }
+    
+    return eligible;
   };
+
+  const eligibleCategories = checkEligibilityExplicit(dateOfBirth);
 
   const openModal = (type) => setModal({ open: true, type });
   const closeModal = () => setModal({ open: false, type: null });
@@ -54,8 +71,13 @@ export default function Registration() {
       toast.error("Please select date of birth.");
       return;
     }
-    if (!eligibleCategories.includes(data.category)) {
-      toast.error("Please select category or You are not eligible to register.");
+    if (!data.category || data.category.length === 0) {
+      toast.error("Please select at least one category.");
+      return;
+    }
+    const invalidCategories = data.category.filter(cat => !eligibleCategories.includes(cat));
+    if (invalidCategories.length > 0) {
+      toast.error("Please select only eligible categories.");
       return;
     }
     if (!data.gender) {
@@ -70,7 +92,6 @@ export default function Registration() {
     setApiError(null);
     
     try {
-      // API call to create registration
       const response = await fetch(`${url}/api/registration/create`, {
         method: 'POST',
         headers: {
@@ -88,7 +109,7 @@ export default function Registration() {
         // Success - store the registration ID and form data
         setRegistrationId(result.registrationId);
         setFormData(data);
-        setStep(2); // Move to payment step
+        setStep(2);
         toast.success("Registration details saved successfully!");
       } else {
         // Handle API errors
@@ -120,7 +141,7 @@ export default function Registration() {
         },
         body: JSON.stringify({
           registrationId: registrationId,
-          amount: 2500, 
+          amount: 1000, 
           paymentMethod: paymentMethod
         }),
       });
@@ -279,7 +300,7 @@ export default function Registration() {
           <div className="bg-white rounded-2xl shadow-2xl p-8">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-gray-800 mb-2">Complete Your Payment</h3>
-              <p className="text-gray-600">Registration Fee: ₹2,500</p>
+              <p className="text-gray-600">Registration Fee: ₹1,000</p>
               <p className="text-sm text-green-600 mt-1">Registration ID: {registrationId}</p>
             </div>
 
@@ -289,8 +310,8 @@ export default function Registration() {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-gray-600">Name:</span>
                 <span className="font-medium">{formData?.teamRepName}</span>
-                <span className="text-gray-600">Category:</span>
-                <span className="font-medium">{formData?.category}</span>
+                <span className="text-gray-600">Categories:</span>
+                <span className="font-medium">{formData?.category?.join(", ")}</span>
                 <span className="text-gray-600">Academy:</span>
                 <span className="font-medium">{formData?.teamName}</span>
                 <span className="text-gray-600">City:</span>
@@ -387,7 +408,7 @@ export default function Registration() {
                   "Processing..."
                 ) : (
                   <>
-                    Pay ₹2,500
+                    Pay ₹1,000
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -597,9 +618,9 @@ export default function Registration() {
                       onYearChange={(year) => {
                         setValue("dateOfBirth", year, { shouldValidate: true })
                       }}
-                      disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
-                      fromYear={2000}
-                      toYear={new Date().getFullYear()}
+                      disabled={(date) => date > new Date() || date < new Date("2009-01-01")}
+                      fromYear={2009}
+                      toYear={2017}
                       captionLayout="dropdown"
                     />
                   </PopoverContent>
@@ -610,26 +631,43 @@ export default function Registration() {
               {/* Category */}
               {eligibleCategories.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Choose Category *</label>
-                  <div className="relative">
-                    <Trophy className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Select
-                      value={category}
-                      onValueChange={(val) => setValue("category", val, { shouldValidate: true })}
-                    >
-                      <SelectTrigger className="pl-10">
-                        <SelectValue placeholder="Select your category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {eligibleCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <label className="block text-base font-medium text-gray-700 mb-2">
+                    Choose Categories *
+                  </label>
+                  <div className="space-y-3">
+                    {eligibleCategories.map((cat) => (
+                      <div key={cat} className="flex items-center space-x-3">
+                        <Checkbox
+                          id={cat}
+                          checked={category?.includes(cat) || false}
+                          onCheckedChange={(checked) => {
+                            const currentCategories = category || [];
+                            if (checked) {
+                              setValue("category", [...currentCategories, cat], { shouldValidate: true });
+                            } else {
+                              setValue(
+                                "category",
+                                currentCategories.filter((c) => c !== cat),
+                                { shouldValidate: true }
+                              );
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={cat}
+                          className="text-sm text-gray-700 cursor-pointer"
+                        >
+                          {cat}
+                        </label>
+                      </div>
+                    ))}
                   </div>
-                  {errors.category && <p className="text-red-500 text-sm">Category is required</p>}
+                  {errors.category && (
+                    <p className="text-red-500 text-sm">At least one category is required</p>
+                  )}
                 </div>
               )}
+
 
               {/* Academy */}
               <div className="lg:col-span-2 mt-8">
@@ -812,7 +850,7 @@ export default function Registration() {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-center">
                     <CreditCard className="w-5 h-5 text-blue-600 mr-2" />
-                    <span className="font-medium text-blue-800">Registration Fee: ₹2,500</span>
+                    <span className="font-medium text-blue-800">Registration Fee: ₹1,000 per category</span>
                   </div>
                   <p className="text-blue-700 text-sm mt-1">
                     Complete payment after submitting the form to finalize your registration.
