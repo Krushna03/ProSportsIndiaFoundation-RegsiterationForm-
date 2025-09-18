@@ -24,6 +24,7 @@ export default function Registration() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [registrationId, setRegistrationId] = useState(null);
   const [apiError, setApiError] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState(1000);
   const url = import.meta.env.VITE_BACKEND_URL
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm({
@@ -42,7 +43,7 @@ export default function Registration() {
     
     // Born 2015 or later -> U11 only
     if (dob >= new Date("2015-01-01")) {
-      eligible.push("Under 11 (U11)");
+      eligible.push("Under 11 (U11)", "Under 13 (U13)");
     }
     // Born 2013-2014 -> U11 and U13
     else if (dob >= new Date("2013-01-01")) {
@@ -109,6 +110,7 @@ export default function Registration() {
         // Success - store the registration ID and form data
         setRegistrationId(result.registrationId);
         setFormData(data);
+        setPaymentAmount(result.data.paymentAmount);
         setStep(2);
         toast.success("Registration details saved successfully!");
       } else {
@@ -141,7 +143,7 @@ export default function Registration() {
         },
         body: JSON.stringify({
           registrationId: registrationId,
-          amount: 1000, 
+          amount: paymentAmount, 
           paymentMethod: paymentMethod
         }),
       });
@@ -300,7 +302,10 @@ export default function Registration() {
           <div className="bg-white rounded-2xl shadow-2xl p-8">
             <div className="mb-6">
               <h3 className="text-xl font-bold text-gray-800 mb-2">Complete Your Payment</h3>
-              <p className="text-gray-600">Registration Fee: ₹1,000</p>
+              <p className="text-gray-600">Registration Fee: ₹{paymentAmount.toLocaleString()}</p>
+              <p className="text-sm text-blue-600 mt-1">
+              {formData?.category?.length} categor{formData?.category?.length > 1 ? 'ies' : 'y'} × ₹1,000 = ₹{paymentAmount.toLocaleString()}
+            </p>
               <p className="text-sm text-green-600 mt-1">Registration ID: {registrationId}</p>
             </div>
 
@@ -408,7 +413,7 @@ export default function Registration() {
                   "Processing..."
                 ) : (
                   <>
-                    Pay ₹1,000
+                    Pay ₹{paymentAmount.toLocaleString()}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
