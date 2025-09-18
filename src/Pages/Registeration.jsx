@@ -9,9 +9,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from 'sonner';
-import { categoryEligibility, cities, genders } from '../constants/formConstants';
+import { cities, genders } from '../constants/formConstants';
 import { rulesText, termsText } from "../constants/rulesAndTerms"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useNavigate } from 'react-router-dom';
 
 export default function Registration() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -26,6 +27,7 @@ export default function Registration() {
   const [apiError, setApiError] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState(1000);
   const url = import.meta.env.VITE_BACKEND_URL
+  const navigate = useNavigate()
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
@@ -163,7 +165,6 @@ export default function Registration() {
         description: 'Registration Fee',
         order_id: orderData.id,
         handler: async function (response) {
-          // Payment successful, verify on backend
           await verifyPayment(response);
         },
         prefill: {
@@ -232,6 +233,10 @@ export default function Registration() {
     setApiError(null);
   };
 
+  const handleNavigate = () => {
+    navigate(0);
+  }
+
   // Retry registration
   const retryRegistration = () => {
     setApiError(null);
@@ -252,6 +257,9 @@ export default function Registration() {
             <p className="text-green-800 font-semibold">Payment Status: Confirmed</p>
             <p className="text-green-600 text-sm">Registration ID: {registrationId}</p>
           </div>
+          <div onClick={handleNavigate} className='mt-5 p-2 bg-blue-600 text-white font-semibold rounded-lg cursor-pointer'>
+            Go Back
+          </div>
         </div>
       </div>
     );
@@ -267,41 +275,41 @@ export default function Registration() {
             <div className="inline-flex items-center justify-center w-48 h-48 rounded-full">
               <img src="pjc-logo-1.png" alt="logo" />
             </div>
-            <h1 className="text-2xl md:text-4xl font-extrabold text-gray-800 -mt-2">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-800 -mt-2">
               Payment Details
             </h1>
           </div>
 
           {/* Progress indicator */}
           <div className="mb-8">
-            <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center justify-center space-x-2 sm:space-x-4">
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-white" />
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <span className="ml-2 text-sm font-medium text-green-600">Registration Form</span>
+                <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-green-600">Registration</span>
               </div>
               <div className="w-16 h-1 bg-gray-300"></div>
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">2</span>
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs sm:textr-sm font-bold">2</span>
                 </div>
-                <span className="ml-2 text-sm font-medium text-blue-600">Payment</span>
+                <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-blue-600">Payment</span>
               </div>
               <div className="w-16 h-1 bg-gray-300"></div>
               <div className="flex items-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 font-bold">3</span>
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                  <span className="text-gray-600 text-xs sm:textr-sm font-bold">3</span>
                 </div>
-                <span className="ml-2 text-sm font-medium text-gray-500">Confirmation</span>
+                <span className="ml-1 sm:ml-2 text-xs sm:text-sm font-medium text-gray-500">Confirmation</span>
               </div>
             </div>
           </div>
 
           {/* Payment Form */}
-          <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-8">
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">Complete Your Payment</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">Complete Your Payment</h3>
               <p className="text-gray-600">Registration Fee: ₹{paymentAmount.toLocaleString()}</p>
               <p className="text-sm text-blue-600 mt-1">
               {formData?.category?.length} categor{formData?.category?.length > 1 ? 'ies' : 'y'} × ₹1,000 = ₹{paymentAmount.toLocaleString()}
@@ -310,7 +318,7 @@ export default function Registration() {
             </div>
 
             {/* Registration Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-4 sm:mb-6">
               <h4 className="font-semibold text-gray-800 mb-2">Registration Summary</h4>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <span className="text-gray-600">Name:</span>
@@ -330,7 +338,7 @@ export default function Registration() {
               <div className="grid grid-cols-1 gap-3">
                 {/* UPI */}
                 <div 
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                  className={`border rounded-lg p-3 sm:p-4 cursor-pointer transition-colors ${
                     paymentMethod === 'upi' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
                   }`}
                   onClick={() => setPaymentMethod('upi')}
@@ -344,14 +352,14 @@ export default function Registration() {
                       onChange={() => setPaymentMethod('upi')}
                       className="mr-3"
                     />
-                    <CreditCard className="w-5 h-5 mr-2 text-gray-600" />
-                    <span className="font-medium">UPI Payment</span>
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
+                    <span className="text-sm sm:text-base font-medium">UPI Payment</span>
                   </div>
                 </div>
 
                 {/* Card */}
                 <div 
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                  className={`border rounded-lg p-3 sm:p-4 cursor-pointer transition-colors ${
                     paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
                   }`}
                   onClick={() => setPaymentMethod('card')}
@@ -365,14 +373,14 @@ export default function Registration() {
                       onChange={() => setPaymentMethod('card')}
                       className="mr-3"
                     />
-                    <CreditCard className="w-5 h-5 mr-2 text-gray-600" />
-                    <span className="font-medium">Credit/Debit Card</span>
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
+                    <span className="text-sm sm:text-base font-medium">Credit/Debit Card</span>
                   </div>
                 </div>
 
                 {/* Net Banking */}
                 <div 
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                  className={`border rounded-lg p-3 sm:p-4 cursor-pointer transition-colors ${
                     paymentMethod === 'netbanking' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
                   }`}
                   onClick={() => setPaymentMethod('netbanking')}
@@ -386,8 +394,8 @@ export default function Registration() {
                       onChange={() => setPaymentMethod('netbanking')}
                       className="mr-3"
                     />
-                    <CreditCard className="w-5 h-5 mr-2 text-gray-600" />
-                    <span className="font-medium">Net Banking</span>
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" />
+                    <span className="text-sm sm:text-base font-medium">Net Banking</span>
                   </div>
                 </div>
               </div>
@@ -398,7 +406,7 @@ export default function Registration() {
               <button
                 onClick={goBackToForm}
                 disabled={processingPayment}
-                className="flex-1 flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 flex items-center justify-center py-2 px-2 sm:px-4 border border-gray-300 rounded-lg text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Form
@@ -406,7 +414,7 @@ export default function Registration() {
               <button
                 onClick={handlePayment}
                 disabled={!paymentMethod || processingPayment}
-                className="flex-1 flex items-center justify-center py-2 px-4 rounded-lg font-semibold text-white shadow-lg disabled:opacity-50"
+                className="flex-1 flex items-center justify-center py-2 px-2 sm:px-4 rounded-lg font-semibold text-white text-sm sm:text-base shadow-lg disabled:opacity-50"
                 style={{ background: 'linear-gradient(to right, #1e3a8a, #1d4ed8)' }}
               >
                 {processingPayment ? (
@@ -485,12 +493,12 @@ export default function Registration() {
 
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <form onSubmit={handleSubmit(onFormSubmit)} className="p-8">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="p-4 sm:p-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
               {/* Title */}
               <div className="lg:col-span-2">
-                <h3 className="text-xl font-bold sm:font-semibold text-gray-800 mb-2 sm:mb-4 text-center">
+                <h3 className="text-xl font-bold sm:font-semibold text-gray-800 mb-2 mt-4 sm:mt-0 sm:mb-4 text-center">
                   Pro Junior Championship 2025
                 </h3>
               </div>
@@ -505,7 +513,7 @@ export default function Registration() {
                   placeholder="Enter full name"
                   {...register("teamRepName", { required: "Full name is required" })}
                 />
-                {errors.teamRepName && <p className="text-red-500 text-sm">{errors.teamRepName.message}</p>}
+                {errors.teamRepName && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.teamRepName.message}</p>}
               </div>
 
               {/* Email */}
@@ -525,7 +533,7 @@ export default function Registration() {
                     })}
                   />
                 </div>
-                {errors.emailId && <p className="text-red-500 text-sm">{errors.emailId.message}</p>}
+                {errors.emailId && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.emailId.message}</p>}
               </div>
 
               {/* Phone */}
@@ -545,7 +553,7 @@ export default function Registration() {
                     })}
                   />
                 </div>
-                {errors.phoneNo && <p className="text-red-500 text-sm">{errors.phoneNo.message}</p>}
+                {errors.phoneNo && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.phoneNo.message}</p>}
               </div>
 
               {/* Gender */}
@@ -688,7 +696,7 @@ export default function Registration() {
                   placeholder="Enter academy name"
                   {...register("teamName", { required: "Academy name is required" })}
                 />
-                {errors.teamName && <p className="text-red-500 text-sm">{errors.teamName.message}</p>}
+                {errors.teamName && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.teamName.message}</p>}
               </div>
 
               <div className='sm:-mt-3'>
@@ -698,7 +706,7 @@ export default function Registration() {
                   placeholder="Enter academy location"
                   {...register("academyLocation", { required: "Academy location is required" })}
                 />
-                {errors.academyLocation && <p className="text-red-500 text-sm">{errors.academyLocation.message}</p>}
+                {errors.academyLocation && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.academyLocation.message}</p>}
               </div>
 
               {/* Coach */}
@@ -715,7 +723,7 @@ export default function Registration() {
                   placeholder="Enter coach name"
                   {...register("coachName", { required: "Coach name is required" })}
                 />
-                {errors.coachName && <p className="text-red-500 text-sm">{errors.coachName.message}</p>}
+                {errors.coachName && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.coachName.message}</p>}
               </div>
 
               <div className='sm:-mt-3'>
@@ -732,7 +740,7 @@ export default function Registration() {
                     })}
                   />
                 </div>
-                {errors.coachMobile && <p className="text-red-500 text-sm">{errors.coachMobile.message}</p>}
+                {errors.coachMobile && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.coachMobile.message}</p>}
               </div>
 
               <div className="lg:col-span-2">
@@ -749,7 +757,7 @@ export default function Registration() {
                     })}
                   />
                 </div>
-                {errors.coachEmail && <p className="text-red-500 text-sm">{errors.coachEmail.message}</p>}
+                {errors.coachEmail && <p className="text-red-500 mt-1 ml-1 text-sm">{errors.coachEmail.message}</p>}
               </div>
 
               {/* Terms */}
@@ -773,7 +781,7 @@ export default function Registration() {
                   </span>
                 </div>
                 {errors.rulesAccepted && (
-                  <p className="text-red-500 text-sm -mt-2 mb-2">{errors.rulesAccepted.message}</p>
+                  <p className="text-red-500 text-sm -mt-2 ml-7 mb-2">{errors.rulesAccepted.message}</p>
                 )}
 
                 {/* Terms & Conditions */}
@@ -795,12 +803,12 @@ export default function Registration() {
                   </span>
                 </div>
                 {errors.termsAccepted && (
-                  <p className="text-red-500 text-sm -mt-2 mb-2">{errors.termsAccepted.message}</p>
+                  <p className="text-red-500 text-sm ml-7 -mt-2 mb-2">{errors.termsAccepted.message}</p>
                 )}
 
                 {/* Modal */}
                 {modal.open && (
-                  <div className="fixed inset-0 flex items-center justify-center z-50">
+                  <div className="fixed inset-0 flex items-center justify-center z-50 px-4 md:px-0">
                     {/* Overlay */}
                     <div
                       className="absolute inset-0 bg-black bg-opacity-50"
@@ -808,8 +816,8 @@ export default function Registration() {
                     ></div>
 
                     {/* Modal Content */}
-                    <div className="bg-white rounded-lg shadow-lg p-6 z-10 max-w-3xl w-full max-h-[85vh] flex flex-col">
-                      <h2 className="text-lg font-semibold mb-4">
+                    <div className="bg-white rounded-lg shadow-lg p-5 sm:p-6 z-10 max-w-3xl w-full max-h-[85vh] flex flex-col">
+                      <h2 className="text-lg font-semibold mb-3 sm:mb-4">
                         {modal.type === "rules" ? "Rules & Regulations" : "Terms & Conditions"}
                       </h2>
                       <div
@@ -820,7 +828,7 @@ export default function Registration() {
                           {modal.type === "rules" ? rulesText : termsText}
                         </p>
                       </div>
-                      <div className="mt-6 flex justify-end">
+                      <div className="mt-3 sm:mt-6 flex justify-end">
                         <button
                           className="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800"
                           onClick={closeModal}
@@ -846,13 +854,13 @@ export default function Registration() {
                   </span>
                 </div>
                 {errors.agreeTerms && (
-                  <p className="text-red-500 text-sm -mt-2 mb-2">{errors.agreeTerms.message}</p>
+                  <p className="text-red-500 text-sm ml-7 mt-1 mb-2">{errors.agreeTerms.message}</p>
                 )}
               </div>
 
               {/* Payment Notice */}
-              <div className="lg:col-span-2 mt-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="lg:col-span-2 sm:mt-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                   <div className="flex items-center">
                     <CreditCard className="w-5 h-5 text-blue-600 mr-2" />
                     <span className="font-medium text-blue-800">Registration Fee: ₹1,000 per category</span>
@@ -864,7 +872,7 @@ export default function Registration() {
               </div>  
 
               {/* Submit */}
-              <div className="lg:col-span-2 mt-4">
+              <div className="lg:col-span-2 mb-3 sm:mb-0 sm:mt-4">
                 <button
                   type="submit"
                   disabled={isSubmitting || (dateOfBirth && eligibleCategories.length === 0)}
